@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>YouTube Chapter Marker Builder</title>
+<style>
+:root {
+  --bg: #f5f5f3;
+  --panel: #ffffff;
+  --panel-2: #e8e8e6;
+  --ink: #0a0a0a;
+  --ink-soft: #4a4a4a;
+  --rule: #1a1a1a;
+  --rule-soft: #c8c8c8;
+  --slate: #0a0a0a;
+  --slate-stripe: #1a1a1a;
+  --yellow: #f4c430;
+  --yellow-deep: #d4a420;
+  --ok: #1a5c2e;
+  --warn: #8a4a00;
+  --err: #8b1a1a;
+}
+[data-theme="dark"] {
+  --bg: #0a0a0a;
+  --panel: #161616;
+  --panel-2: #1f1f1f;
+  --ink: #f0f0ee;
+  --ink-soft: #b0b0ae;
+  --rule: #f4c430;
+  --rule-soft: #2a2a2a;
+  --slate: #f0f0ee;
+  --slate-stripe: #1a1a1a;
+  --yellow: #f4c430;
+  --yellow-deep: #ffd750;
+  --ok: #6dd380;
+  --warn: #d4a155;
+  --err: #e88080;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  background: var(--bg);
+  color: var(--ink);
+  min-height: 100vh;
+  padding: 2rem 1rem;
+  line-height: 1.5;
+}
+.wrap { max-width: 1100px; margin: 0 auto; }
+.slate {
+  background: var(--slate);
+  color: var(--bg);
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 2rem;
+  border-radius: 3px;
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.85rem;
+}
+[data-theme="dark"] .slate { background: var(--panel); border: 2px solid var(--yellow); }
+.slate::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 8px;
+  background: repeating-linear-gradient(
+    90deg,
+    var(--yellow) 0,
+    var(--yellow) 12px,
+    var(--slate-stripe) 12px,
+    var(--slate-stripe) 24px
+  );
+}
+[data-theme="dark"] .slate::before {
+  background: repeating-linear-gradient(
+    90deg,
+    var(--yellow) 0,
+    var(--yellow) 12px,
+    var(--panel) 12px,
+    var(--panel) 24px
+  );
+}
+.slate-content { padding-top: 0.4rem; }
+h1 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--yellow);
+}
+.slate-subtitle {
+  font-size: 0.78rem;
+  color: var(--bg);
+  margin-top: 0.25rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  opacity: 0.75;
+}
+[data-theme="dark"] .slate-subtitle { color: var(--ink); }
+.theme-btn {
+  background: transparent;
+  border: 1px solid var(--yellow);
+  color: var(--yellow);
+  padding: 0.4rem 0.85rem;
+  font-size: 0.75rem;
+  font-family: inherit;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  border-radius: 2px;
+}
+.theme-btn:hover { background: var(--yellow); color: var(--slate); }
+.lede {
+  font-family: ui-sans-serif, -apple-system, sans-serif;
+  font-size: 0.95rem;
+  margin-bottom: 1.75rem;
+  max-width: 65ch;
+  color: var(--ink);
+}
+.input-section {
+  background: var(--panel);
+  border: 2px solid var(--rule);
+  padding: 1.5rem;
+  margin-bottom: 1.75rem;
+  border-radius: 3px;
+}
+.input-section h2 {
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ink);
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--yellow);
+}
+[data-theme="dark"] .input-section { border-color: var(--yellow); }
+.tabs {
+  display: flex;
+  gap: 0;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid var(--rule-soft);
+}
+.tab {
+  background: transparent;
+  border: none;
+  padding: 0.5rem 1rem;
+  font-family: inherit;
+  font-size: 0.78rem;
+  cursor: pointer;
+  color: var(--ink-soft);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  border-radius: 0;
+}
+.tab.active {
+  color: var(--ink);
+  border-bottom-color: var(--yellow);
+  font-weight: 700;
+}
+.panel { display: none; }
+.panel.active { display: block; }
+
+.row {
+  display: grid;
+  grid-template-columns: 100px 1fr auto;
+  gap: 0.65rem;
+  margin-bottom: 0.5rem;
+  align-items: center;
+}
+.row input {
+  background: var(--panel-2);
+  border: 1px solid var(--rule-soft);
+  color: var(--ink);
+  padding: 0.5rem 0.65rem;
+  font-family: inherit;
+  font-size: 0.9rem;
+  border-radius: 2px;
+  width: 100%;
+}
+.row input.timestamp {
+  text-align: center;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+}
+.row input:focus { outline: 2px solid var(--yellow); outline-offset: 1px; }
+.row .remove-btn {
+  background: transparent;
+  border: 1px solid var(--rule-soft);
+  color: var(--ink-soft);
+  padding: 0.4rem 0.65rem;
+  font-size: 0.7rem;
+  cursor: pointer;
+  border-radius: 2px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.row .remove-btn:hover { color: var(--err); border-color: var(--err); }
+textarea {
+  width: 100%;
+  background: var(--panel-2);
+  border: 1px solid var(--rule-soft);
+  color: var(--ink);
+  padding: 0.85rem;
+  font-family: inherit;
+  font-size: 0.85rem;
+  line-height: 1.6;
+  resize: vertical;
+  min-height: 200px;
+  border-radius: 2px;
+}
+textarea:focus { outline: 2px solid var(--yellow); outline-offset: 1px; }
+.btn-row {
+  display: flex;
+  gap: 0.65rem;
+  margin-top: 1rem;
+  flex-wrap: wrap;
+}
+button {
+  font-family: inherit;
+  font-size: 0.78rem;
+  padding: 0.55rem 1.1rem;
+  border: 1px solid var(--rule-soft);
+  background: var(--panel);
+  color: var(--ink);
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  border-radius: 2px;
+}
+button.primary {
+  background: var(--yellow);
+  border-color: var(--yellow-deep);
+  color: var(--slate);
+  font-weight: 700;
+}
+[data-theme="dark"] button.primary {
+  color: var(--bg) !important;
+}
+button.primary:hover { background: var(--yellow-deep); }
+button:hover { border-color: var(--yellow); }
+.results { display: none; }
+.results.show { display: block; }
+.section {
+  background: var(--panel);
+  border: 2px solid var(--rule);
+  padding: 1.5rem;
+  margin-bottom: 1.25rem;
+  border-radius: 3px;
+}
+[data-theme="dark"] .section { border-color: var(--yellow); }
+.section h2 {
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--yellow);
+}
+.output-pre {
+  background: var(--panel-2);
+  padding: 1rem;
+  border-radius: 2px;
+  font-family: inherit;
+  font-size: 0.9rem;
+  line-height: 1.7;
+  overflow-x: auto;
+  white-space: pre;
+  border: 1px solid var(--rule-soft);
+}
+.checks {
+  list-style: none;
+  padding: 0;
+  margin-top: 0.85rem;
+}
+.checks li {
+  padding: 0.55rem 0.85rem;
+  margin-bottom: 0.4rem;
+  border-radius: 2px;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.55rem;
+  font-family: ui-sans-serif, -apple-system, sans-serif;
+  font-size: 0.88rem;
+  background: var(--panel-2);
+  border-left: 4px solid var(--yellow);
+}
+.checks li.ok { border-left-color: var(--ok); }
+.checks li.warn { border-left-color: var(--warn); }
+.checks li.err { border-left-color: var(--err); }
+.check-icon {
+  font-weight: 700;
+  font-family: inherit;
+  font-size: 0.78rem;
+  width: 1.5rem;
+  flex-shrink: 0;
+  text-transform: uppercase;
+}
+.checks li.ok .check-icon { color: var(--ok); }
+.checks li.warn .check-icon { color: var(--warn); }
+.checks li.err .check-icon { color: var(--err); }
+.spec-card {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 0.45rem 1.5rem;
+  font-size: 0.85rem;
+  background: var(--panel-2);
+  padding: 1rem;
+  border-radius: 2px;
+  margin-top: 1rem;
+}
+.spec-card dt {
+  font-weight: 700;
+  color: var(--ink);
+}
+.spec-card dd {
+  color: var(--ink-soft);
+}
+footer {
+  margin-top: 2.5rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--rule-soft);
+  font-size: 0.78rem;
+  color: var(--ink-soft);
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.85rem;
+  font-family: ui-sans-serif, -apple-system, sans-serif;
+}
+footer a { color: var(--ink); text-decoration: underline; text-decoration-color: var(--yellow); text-decoration-thickness: 2px; }
+[data-theme="dark"] footer a { color: var(--yellow); }
+@media (max-width: 700px) {
+  body { padding: 1rem 0.75rem; }
+  h1 { font-size: 1.2rem; }
+  .row { grid-template-columns: 90px 1fr auto; }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="slate">
+  <div class="slate-content">
+    <h1>Chapter Marker Builder</h1>
+    <div class="slate-subtitle">// Validate and format YouTube chapter timestamps</div>
+  </div>
+  <button class="theme-btn" id="theme-toggle" type="button">Dark</button>
+</div>
+
+<p class="lede">YouTube renders video chapters when the description contains properly formatted timestamps that meet specific rules. This tool validates your chapters against those rules and outputs a YouTube-formatted block ready to paste into your description.</p>
+
+<div class="input-section">
+  <h2>Chapter input</h2>
+  <div class="tabs">
+    <button class="tab active" data-target="rows" type="button">Row by row</button>
+    <button class="tab" data-target="paste" type="button">Paste block</button>
+  </div>
+
+  <div class="panel active" id="panel-rows">
+    <div id="rows-container">
+      <div class="row" data-i="0">
+        <input type="text" class="timestamp" placeholder="0:00" value="0:00">
+        <input type="text" class="title" placeholder="Intro">
+      </div>
+      <div class="row" data-i="1">
+        <input type="text" class="timestamp" placeholder="1:30">
+        <input type="text" class="title" placeholder="Setup">
+        <button class="remove-btn" type="button">Remove</button>
+      </div>
+      <div class="row" data-i="2">
+        <input type="text" class="timestamp" placeholder="3:00">
+        <input type="text" class="title" placeholder="Main content">
+        <button class="remove-btn" type="button">Remove</button>
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="primary" id="validate-rows-btn" type="button">Validate</button>
+      <button id="add-row-btn" type="button">+ Add row</button>
+    </div>
+  </div>
+
+  <div class="panel" id="panel-paste">
+    <p style="font-size: 0.85rem; color: var(--ink-soft); font-family: ui-sans-serif, sans-serif; margin-bottom: 0.5rem;">Paste a chapter block in any common format. The tool parses timestamps and titles separated by whitespace or punctuation.</p>
+    <textarea id="paste-input" placeholder="0:00 Intro&#10;1:30 Setup&#10;3:00 Main content&#10;7:45 Wrap-up"></textarea>
+    <div class="btn-row">
+      <button class="primary" id="validate-paste-btn" type="button">Validate</button>
+      <button id="sample-btn" type="button">Load sample</button>
+      <button id="clear-btn" type="button">Clear</button>
+    </div>
+  </div>
+</div>
+
+<div class="results" id="results">
+  <div class="section">
+    <h2>Validation</h2>
+    <ul class="checks" id="checks"></ul>
+  </div>
+
+  <div class="section">
+    <h2>Formatted output</h2>
+    <p style="font-family: ui-sans-serif, sans-serif; font-size: 0.85rem; color: var(--ink-soft); margin-bottom: 0.85rem;">Paste this into your video description. The first chapter must be at 0:00 for YouTube to render the chapter UI.</p>
+    <pre class="output-pre" id="output"></pre>
+    <div class="btn-row">
+      <button class="primary" id="copy-btn" type="button">Copy to clipboard</button>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>YouTube chapter rules</h2>
+    <dl class="spec-card">
+      <dt>First chapter</dt><dd>Must start at 00:00</dd>
+      <dt>Minimum count</dt><dd>At least 3 chapters</dd>
+      <dt>Minimum gap</dt><dd>Each chapter at least 10 seconds long</dd>
+      <dt>Order</dt><dd>Timestamps must be in ascending order</dd>
+      <dt>Format</dt><dd>One chapter per line: TIMESTAMP TITLE (e.g. 0:00 Intro)</dd>
+      <dt>Timestamp format</dt><dd>MM:SS or H:MM:SS or HH:MM:SS</dd>
+    </dl>
+  </div>
+</div>
+
+<footer>
+  <div>YouTube Chapter Marker Builder. MIT licensed. <a href="https://github.com/0xelitesystem/youtube-chapter-marker-builder" target="_blank" rel="noopener">View source</a>.</div>
+  <div>Validates against YouTube chapter spec.</div>
+</footer>
+</div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const themeBtn = $("theme-toggle");
+function setTheme(t) {
+  document.documentElement.setAttribute("data-theme", t);
+  themeBtn.textContent = t === "dark" ? "Light" : "Dark";
+}
+themeBtn.addEventListener("click", () => {
+  const cur = document.documentElement.getAttribute("data-theme") || "light";
+  setTheme(cur === "dark" ? "light" : "dark");
+});
+
+document.querySelectorAll(".tab").forEach(tab => {
+  tab.addEventListener("click", () => {
+    document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+    document.querySelectorAll(".panel").forEach(p => p.classList.remove("active"));
+    tab.classList.add("active");
+    $("panel-" + tab.dataset.target).classList.add("active");
+  });
+});
+
+function parseTimestamp(s) {
+  // Returns seconds or null if invalid
+  s = s.trim();
+  const m = s.match(/^(?:(\d+):)?(\d{1,2}):(\d{2})$/);
+  if (!m) return null;
+  const h = parseInt(m[1] || "0");
+  const min = parseInt(m[2]);
+  const sec = parseInt(m[3]);
+  if (sec >= 60 || min >= 60) return null;
+  return h * 3600 + min * 60 + sec;
+}
+
+function formatTimestamp(sec) {
+  const h = Math.floor(sec / 3600);
+  const m = Math.floor((sec % 3600) / 60);
+  const s = sec % 60;
+  const pad = n => String(n).padStart(2, "0");
+  if (h > 0) return `${h}:${pad(m)}:${pad(s)}`;
+  return `${m}:${pad(s)}`;
+}
+
+function gatherFromRows() {
+  const rows = document.querySelectorAll("#rows-container .row");
+  const out = [];
+  rows.forEach(r => {
+    const ts = r.querySelector(".timestamp").value.trim();
+    const title = r.querySelector(".title").value.trim();
+    if (ts || title) out.push({ ts, title });
+  });
+  return out;
+}
+
+function gatherFromPaste() {
+  const text = $("paste-input").value;
+  const out = [];
+  text.split("\n").forEach(line => {
+    line = line.trim();
+    if (!line) return;
+    // Match leading timestamp, then the rest is title
+    const m = line.match(/^(\d{1,2}:\d{2}(?::\d{2})?|\d{1,2}:\d{2})[\s\-:.]*(.*)$/);
+    if (m) {
+      out.push({ ts: m[1], title: m[2].trim() });
+    } else {
+      out.push({ ts: "", title: line });
+    }
+  });
+  return out;
+}
+
+function validate(chapters) {
+  const checks = [];
+  const parsed = [];
+
+  if (chapters.length === 0) {
+    checks.push({ level: "err", msg: "No chapters to validate." });
+    return { checks, parsed: [] };
+  }
+
+  if (chapters.length < 3) {
+    checks.push({ level: "err", msg: `Only ${chapters.length} chapter(s). YouTube requires at least 3 chapters.` });
+  } else {
+    checks.push({ level: "ok", msg: `${chapters.length} chapters total.` });
+  }
+
+  // Parse all timestamps
+  for (let i = 0; i < chapters.length; i++) {
+    const c = chapters[i];
+    if (!c.ts) {
+      checks.push({ level: "err", msg: `Row ${i + 1} (${c.title || "untitled"}): missing timestamp.` });
+      parsed.push({ sec: null, ts: c.ts, title: c.title, idx: i });
+      continue;
+    }
+    const sec = parseTimestamp(c.ts);
+    if (sec === null) {
+      checks.push({ level: "err", msg: `Row ${i + 1}: timestamp "${c.ts}" is not in MM:SS or H:MM:SS format.` });
+      parsed.push({ sec: null, ts: c.ts, title: c.title, idx: i });
+      continue;
+    }
+    if (!c.title) {
+      checks.push({ level: "warn", msg: `Row ${i + 1} (${c.ts}): missing title.` });
+    }
+    parsed.push({ sec, ts: c.ts, title: c.title || "(no title)", idx: i });
+  }
+
+  // First must be 0:00
+  if (parsed.length > 0 && parsed[0].sec !== null) {
+    if (parsed[0].sec === 0) {
+      checks.push({ level: "ok", msg: "First chapter starts at 0:00." });
+    } else {
+      checks.push({ level: "err", msg: `First chapter must start at 0:00 (currently ${parsed[0].ts}). YouTube will not render chapters otherwise.` });
+    }
+  }
+
+  // Ascending order + min gap
+  let orderOk = true;
+  for (let i = 1; i < parsed.length; i++) {
+    if (parsed[i].sec === null || parsed[i - 1].sec === null) continue;
+    if (parsed[i].sec <= parsed[i - 1].sec) {
+      checks.push({ level: "err", msg: `Row ${i + 1} (${parsed[i].ts}) is not after row ${i} (${parsed[i - 1].ts}). Timestamps must be ascending.` });
+      orderOk = false;
+    } else {
+      const gap = parsed[i].sec - parsed[i - 1].sec;
+      if (gap < 10) {
+        checks.push({ level: "err", msg: `Gap between row ${i} (${parsed[i - 1].ts}) and row ${i + 1} (${parsed[i].ts}) is ${gap}s. YouTube requires at least 10s per chapter.` });
+      }
+    }
+  }
+  if (orderOk && parsed.length > 1) {
+    checks.push({ level: "ok", msg: "All timestamps are in ascending order." });
+  }
+
+  return { checks, parsed };
+}
+
+function render(parsed, checks) {
+  const checksEl = $("checks");
+  checksEl.innerHTML = "";
+  for (const c of checks) {
+    const li = document.createElement("li");
+    li.className = c.level;
+    const icon = c.level === "ok" ? "OK" : c.level === "warn" ? "!" : "X";
+    li.innerHTML = `<span class="check-icon">${icon}</span><span>${escapeHtml(c.msg)}</span>`;
+    checksEl.appendChild(li);
+  }
+
+  const valid = parsed.filter(p => p.sec !== null);
+  if (valid.length === 0) {
+    $("output").textContent = "(no valid chapters to format)";
+  } else {
+    const lines = valid.map(p => `${formatTimestamp(p.sec)} ${p.title || ""}`.trim());
+    $("output").textContent = lines.join("\n");
+  }
+
+  $("results").classList.add("show");
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+$("validate-rows-btn").addEventListener("click", () => {
+  const ch = gatherFromRows();
+  const { checks, parsed } = validate(ch);
+  render(parsed, checks);
+});
+
+$("validate-paste-btn").addEventListener("click", () => {
+  const ch = gatherFromPaste();
+  const { checks, parsed } = validate(ch);
+  render(parsed, checks);
+});
+
+$("add-row-btn").addEventListener("click", () => {
+  const container = $("rows-container");
+  const row = document.createElement("div");
+  row.className = "row";
+  row.innerHTML = `
+    <input type="text" class="timestamp" placeholder="0:00">
+    <input type="text" class="title" placeholder="Title">
+    <button class="remove-btn" type="button">Remove</button>
+  `;
+  container.appendChild(row);
+});
+
+document.addEventListener("click", (e) => {
+  if (e.target.classList.contains("remove-btn")) {
+    e.target.closest(".row").remove();
+  }
+});
+
+$("sample-btn").addEventListener("click", () => {
+  $("paste-input").value = `0:00 Intro
+0:45 What we are building
+2:30 Setting up the project
+6:00 First feature
+10:15 Second feature
+14:30 Wrap-up and next steps`;
+});
+
+$("clear-btn").addEventListener("click", () => {
+  $("paste-input").value = "";
+  $("results").classList.remove("show");
+});
+
+$("copy-btn").addEventListener("click", async () => {
+  const text = $("output").textContent;
+  if (!text || text === "(no valid chapters to format)") return;
+  try {
+    await navigator.clipboard.writeText(text);
+    const btn = $("copy-btn");
+    const orig = btn.textContent;
+    btn.textContent = "Copied";
+    setTimeout(() => { btn.textContent = orig; }, 1500);
+  } catch (e) {
+    // Fallback: select and prompt user
+    const ta = document.createElement("textarea");
+    ta.value = text;
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand("copy"); } catch (e2) {}
+    document.body.removeChild(ta);
+  }
+});
+
+setTheme("light");
+</script>
+</body>
+</html>
