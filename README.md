@@ -2,6 +2,8 @@
 
 Validate and format YouTube chapter timestamps. Two input modes (row-by-row or paste-block). Browser only.
 
+An independent project. Not affiliated with, endorsed by, or sponsored by YouTube or Google LLC.
+
 **Live demo:** https://0xelitesystem.github.io/youtube-chapter-marker-builder/
 
 ## Use
