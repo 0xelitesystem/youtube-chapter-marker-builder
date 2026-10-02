@@ -20,7 +20,7 @@ The tool checks against YouTube's chapter rules:
 
 If any check fails, YouTube won't render the chapter UI on your video. The tool tells you exactly what's wrong before you publish.
 
-## Why
+## Why this exists
 
 The chapter markers in your description are silently picky. If even one rule is broken (timestamp not at 0:00, gap under 10 seconds, format off by a colon), YouTube falls back to no chapters and gives no error message. You only find out by watching your published video.
 
@@ -28,7 +28,7 @@ This tool catches all of that in advance.
 
 ## Privacy
 
-All validation runs in your browser. No requests, no analytics, no third-party scripts.
+All validation runs in your browser. No requests, no analytics, no third-party scripts. The only thing saved to `localStorage` is your light or dark theme choice, under the key `theme`.
 
 ## Run locally
 
