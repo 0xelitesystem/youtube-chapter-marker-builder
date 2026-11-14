@@ -68,7 +68,7 @@ MIT.
 
 ## Related
 
-- [youtube-thumbnail-tester](https://github.com/0xelitesystem/youtube-thumbnail-tester) - thumbnail placement preview
+- [thumbnail-placement-preview](https://github.com/0xelitesystem/thumbnail-placement-preview) - thumbnail placement preview
 - [youtube-title-ab-tester](https://github.com/0xelitesystem/youtube-title-ab-tester) - title comparison
 - [video-srt-cleaner](https://github.com/0xelitesystem/video-srt-cleaner) - clean auto-generated captions
 - [video-description-templates](https://github.com/0xelitesystem/video-description-templates) - description box templates
